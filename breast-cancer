@@ -1,0 +1,66 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.ensemble import RandomForestClassifier
+import joblib
+
+# Load dataset
+data = pd.read_csv("breast-cancer.csv")
+print("Column names in dataset:", data.columns)
+
+# Label Encode all categorical columns
+label_encoder = LabelEncoder()
+for col in data.columns:
+    if data[col].dtype == 'object':
+        data[col] = label_encoder.fit_transform(data[col])
+
+# Show correlation heatmap
+plt.figure(figsize=(10, 10))
+sns.heatmap(data.corr(), annot=True, fmt='.2f', cmap='coolwarm')
+plt.title("Correlation Matrix")
+plt.show()
+
+# Features and labels
+X = data.drop('class', axis=1).values
+y = data['class'].values
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+
+# Scale features
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Train Random Forest model
+rfc = RandomForestClassifier(n_estimators=10, criterion='entropy', random_state=0)
+rfc.fit(X_train, y_train)
+
+# Predict
+y_pred = rfc.predict(X_test)
+
+# Evaluation
+print("\nRandom Forest Classifier for Breast Cancer Prediction")
+print(classification_report(y_test, y_pred))
+print("Accuracy:", accuracy_score(y_test, y_pred))
+
+# Confusion Matrix
+plt.figure(figsize=(6, 4))
+sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt='d', cmap='Blues')
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix")
+plt.show()
+
+# Save the model
+filename = 'Breast_Cancer-pred_model.sav'
+joblib.dump(rfc, filename)
+
+# Load and use model
+loaded_model = joblib.load(filename)
+predictions = loaded_model.predict(X_test)
