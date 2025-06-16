@@ -1,0 +1,55 @@
+import numpy as np 
+import pandas as pd 
+import matplotlib.pyplot as plt 
+import seaborn as sns 
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split 
+from sklearn.preprocessing import StandardScaler 
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report 
+from sklearn.linear_model import LogisticRegression 
+import joblib 
+
+# Load Dataset
+data = pd.read_csv("diabetes.csv")
+
+# Correlation Analysis
+corr = data.corr(method='pearson')
+diabetes_positive_count = len(data[data['Outcome'] == 1]) 
+diabetes_negative_count = len(data[data['Outcome'] == 0]) 
+print("Total positive count: {} and total negative count: {}".format(diabetes_positive_count, diabetes_negative_count))
+
+# Heatmap
+plt.figure(figsize=(12, 12))
+sns.heatmap(data.corr(), annot=True, cmap=plt.cm.viridis, linewidths=0.1, square=True)
+plt.title('Pearson Correlation of Features', size=15)
+plt.show()
+
+# Features and Labels
+x = data.iloc[:, :-1]
+y = data.iloc[:, -1]
+
+# Train-test split
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
+
+# Feature scaling
+sc = StandardScaler()
+x_train = sc.fit_transform(x_train)
+x_test = sc.transform(x_test)
+
+# Model Training
+log = LogisticRegression()
+log.fit(x_train, y_train)
+
+# Prediction and Evaluation
+y_pred = log.predict(x_test)
+print(classification_report(y_test, y_pred))
+print("Accuracy:", accuracy_score(y_test, y_pred))
+
+# Save model
+filename = 'Diabetes-pred_model.sav'
+joblib.dump(log, filename)
+
+# Load model and predict
+loaded_model = joblib.load(filename)
+loaded_model.predict(x_test)
